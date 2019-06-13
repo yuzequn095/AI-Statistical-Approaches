@@ -1,0 +1,255 @@
+/*
+ * Author: Zequn Yu
+ * ID: A14712777
+ * 
+ * KNN, K = 1, 5, 9, 15
+ */
+
+import java.io.*;
+import java.util.*;
+import java.lang.Math;
+
+public class KNN {
+	
+	// list of list to store each number in one line
+	static LinkedList<Integer[]> trainList;
+	static LinkedList<Integer[]> testList;
+	
+	
+	public static void main(String args[]) throws IOException{
+		
+		// get training error
+		
+		// read data from pa1train.txt as train points
+		File trainFile = new File("/Users/Jason/Desktop/151pa1/151pa1/src/pa1train.txt");
+		BufferedReader rtrain = new BufferedReader(new FileReader(trainFile));
+		
+		// read data from pa1train.txt as test points
+		//File testTrainFile = new File("/Users/Jason/Desktop/151pa1/151pa1/src/pa1train.txt");
+		File testTrainFile = new File("/Users/Jason/Desktop/151pa1/151pa1/src/pa1test.txt");
+		//File testTrainFile = new File("/Users/Jason/Desktop/151pa1/151pa1/src/pa1validate.txt");
+		//BufferedReader rtest = new BufferedReader(new FileReader(testTrainFile));
+		//BufferedReader rtest = new BufferedReader(new FileReader(testTrainFile));
+		BufferedReader rtest = new BufferedReader(new FileReader(testTrainFile));
+		
+		// collect each number in one line
+		// for train data
+		//eg. tl[0] = {...}, tl[1] = {...}, tl[2] = {...}
+		trainList = collectData(rtrain);
+		// for test data
+		testList = collectData(rtest);
+
+		
+		// set the index of case
+		int K;
+		// set pq for KNN
+		//PriorityQueue<Data> KNN;
+		int err = 0;
+		int setSize = testList.size();
+		double result;
+		
+		// for case 1
+		K = 1;
+		err = getKNN(K, trainList, testList);
+		System.out.println("When K = : " + K);
+		//System.out.println("Error: " + err);
+		//setSize = trainList.size();
+		//System.out.println("Size: " + setSize);
+		result = (double)err / (double)setSize;
+		System.out.println("Training errors: " + result);
+	
+		
+		// test case: for case 3
+		K = 3;
+		// get the error number
+		err = getKNN(K, trainList, testList);
+		System.out.println("When K = : " + K);
+		//System.out.println("Error: " + err);
+		//setSize = trainList.size();
+		//System.out.println("Size: " + setSize);
+		result = (double)err / (double)setSize;
+		System.out.println("Training errors: " + result);
+
+		
+		// for case 5
+		K = 5;
+		err = getKNN(K, trainList, testList);
+		System.out.println("When K = : " + K);
+		//System.out.println("Error: " + err);
+		//setSize = trainList.size();
+		//System.out.println("Size: " + setSize);
+		result = (double)err / (double)setSize;
+		System.out.println("Training errors: " + result);
+
+		
+		// for case 9
+		K = 9;
+		err = getKNN(K, trainList, testList);
+		System.out.println("When K = : " + K);
+		//System.out.println("Error: " + err);
+		//setSize = trainList.size();
+		//System.out.println("Size: " + setSize);
+		result = (double)err / (double)setSize;
+		System.out.println("Training errors: " + result);
+		
+		
+		// for case 15
+		K = 15;
+		err = getKNN(K, trainList, testList);
+		System.out.println("When K = : " + K);
+		//System.out.println("Error: " + err);
+		//setSize = trainList.size();
+		//System.out.println("Size: " + setSize);
+		result = (double)err / (double)setSize;
+		System.out.println("Training errors: " + result);
+		
+		
+	}
+	
+	// function for collecting actual data from .txt file
+	public static LinkedList<Integer[]> collectData(BufferedReader br) throws IOException{
+		// set a return value
+		LinkedList<Integer[]> dataList = new LinkedList<Integer[]>();
+		
+		// read one line each time
+		String st;
+		while( (st = br.readLine()) != null){
+			// set a array to store each number in line splited by whitespace
+			String snum[] = st.split("\\s");
+			// get length of snum
+			int numOfNum = snum.length;
+			// set a array to store each number in integer
+			Integer inum[] = new Integer[numOfNum];
+			// transfer String to integer
+			for( int i = 0; i < numOfNum; i++){
+				// transfer
+				inum[i] = Integer.parseInt(snum[i]);
+			}
+			// this line is done, collect all integer data
+			dataList.add(inum);
+		}
+		// return dataList
+		return dataList;
+	}// collectData done
+	
+	// class for pair(distance, label)
+	public static class Data implements Comparable<Data>{
+		public Integer getLabel() {
+			return label;
+		}
+
+		public void setLabel(Integer label) {
+			this.label = label;
+		}
+
+		public void setDistance(Integer distance) {
+			this.distance = distance;
+		}
+
+		public Integer getDistance() {
+			return distance;
+		}
+
+		private Integer distance;
+		private Integer label;
+		
+		public Data( Integer distance, int label){
+			this.distance = distance;
+			this.label = label;
+		}
+
+		@Override
+		public int compareTo(Data o) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+	}
+	
+	static class DataComparator implements Comparator<Data>{ 
+        public int compare(Data d1, Data d2) { 
+            if (d1.distance < d2.distance) 
+                return 1; 
+            else if (d1.distance > d2.distance) 
+                return -1; 
+            return 0; 
+            } 
+    } 
+	
+	
+	// function to get KNN 
+	public static int getKNN( int K, LinkedList<Integer[]> aList, LinkedList<Integer[]> bList){
+		// set return value
+		PriorityQueue<Data> KNN = new PriorityQueue<Data>(K, new DataComparator());
+		//PriorityQueue<Integer> dis = new PriorityQueue<Integer>();
+		int errNum = 0;
+		
+		// calculate the distance
+		// for each array element in bList
+		for( Integer btemp[] : bList){
+			// set b label
+			int blabel = btemp[btemp.length - 1];
+			// for each array element in aList
+			for( Integer atemp[] : aList){
+				// calculate distance and add into KNN
+				//Integer distance = calDistance(atemp, btemp);
+				//dis.add(distance);
+				//Data tmp = calDistance(atemp, btemp);
+				Integer distance = calDistance(atemp, btemp);
+				int label = atemp[atemp.length - 1];
+				// if pq < K, add them
+				Data data = new Data(distance, label);
+				KNN.add(data);
+				// else throw biggest distance
+				if ( KNN.size() > K){
+					KNN.poll();
+				}
+			}
+			// all lines of btemp done.
+			// get the target label
+			// because the number of label is fixed
+			Integer labelTable[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			// loop for KNN
+			while(KNN.isEmpty() != true){
+				int tmpLabel = KNN.poll().label;
+				labelTable[tmpLabel]++;
+			}
+			// check which label is greatest
+			int retLabel = 0;
+			for(int i = 0; i < labelTable.length; i++ ){
+				if(labelTable[i] > labelTable[retLabel] ){
+					retLabel = i;
+				}
+			}
+			// check error
+			if( retLabel != blabel){
+				errNum++;
+			}
+		}// for loop ends
+		// return
+		return errNum;
+	}
+
+	public static Integer calDistance(Integer[] atemp, Integer[] btemp) {
+		// set return value		
+		Integer distance = 0;
+		//int label = 0;
+		
+		for( int i = 0; i < atemp.length - 2; i++ ){
+			//distance += Math.pow((atemp[i] - btemp[i]), 2);
+			distance += (atemp[i] - btemp[i]) * (atemp[i] - btemp[i]);
+		}
+		// return var
+		//label = atemp[atemp.length - 1];
+		return distance;
+		//Data ret = new Data(distance, label);
+		//return ret;
+		//PriorityQueue<Data> ret = new PriorityQueue<>();
+		//Data var = null;
+		//var.setDistance(distance);
+		//var.setLabel(label);
+		//ret.add(var);
+		//return ret;
+	}
+
+}
